@@ -157,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
                                                    .expiryDate(Date.from(Instant.now()
                                                                                 .plus(2, ChronoUnit.DAYS)))
                                                    .build();
-
+        log.debug("Verification token created for user {}", user.getId());
         tokenRepository.save(token);
 
         //Send verification mail
