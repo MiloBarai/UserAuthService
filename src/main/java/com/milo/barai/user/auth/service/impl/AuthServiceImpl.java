@@ -1,6 +1,7 @@
 package com.milo.barai.user.auth.service.impl;
 
 import com.google.common.collect.Maps;
+import com.milo.barai.user.auth.dto.ResendVerificationRequestDTO;
 import com.milo.barai.user.auth.dto.UserTokenDTO;
 import com.milo.barai.user.auth.dto.LoginRequestDTO;
 import com.milo.barai.user.auth.dto.RegistrationRequestDTO;
@@ -84,13 +85,29 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         log.debug("User successfully created: {}", user.getId());
 
-        //Save verification token of user.
-        VerificationToken token = generateVerificationToken(user);
-        tokenRepository.save(token);
-
-        //Send verification mail
-        mailService.sendVerificationMail(token.getUser(), token.getToken());
+        initUserVerification(user);
     }
+
+    @Override
+    public void resendVerification(ResendVerificationRequestDTO resendVerificationRequestDTO) {
+        User user = userRepository.findByEmail(resendVerificationRequestDTO.getEmail())
+                                   .orElseThrow(() -> new UserAuthException(NOT_FOUND, "User with specified email not found."));
+
+        if(user.isEnabled()) {
+            throw new UserAuthException(BAD_REQUEST, "User already verified");
+        }
+
+        Optional<VerificationToken> oToken = tokenRepository.findByUser(user);
+
+        if(oToken.isEmpty()) {
+            log.error("User {}, was missing verification token.",user.getId());
+        } else {
+            tokenRepository.delete(oToken.get());
+        }
+
+        initUserVerification(user);
+    }
+
 
     @Override
     @Transactional
@@ -106,7 +123,6 @@ public class AuthServiceImpl implements AuthService {
         User user = token.getUser();
         user.setEnabled(true);
 
-        userRepository.save(user);
     }
 
     @Override
@@ -125,24 +141,30 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserTokenDTO refreshToken(UserTokenDTO userTokenDTO) {
+    public UserTokenDTO refreshUserJWT(UserTokenDTO userTokenDTO) {
         validateUser(userTokenDTO.getUsername());
         String refreshedToken = jwtUtils.refreshToken(userTokenDTO.getUsername(), userTokenDTO.getAuthenticationToken());
         return new UserTokenDTO(userTokenDTO.getUsername(), refreshedToken);
     }
 
-    private VerificationToken generateVerificationToken(User user) {
+    private void initUserVerification(User user) {
 
         String verificationTokenString = UUID.randomUUID().toString();
 
-        return VerificationToken.builder()
-                                .token(verificationTokenString)
-                                .user(user)
-                                .expiryDate(Date.from(Instant.now()
-                                                             .plus(2, ChronoUnit.DAYS)))
-                                .build();
+        VerificationToken token = VerificationToken.builder()
+                                                   .token(verificationTokenString)
+                                                   .user(user)
+                                                   .expiryDate(Date.from(Instant.now()
+                                                                                .plus(2, ChronoUnit.DAYS)))
+                                                   .build();
+
+        tokenRepository.save(token);
+
+        //Send verification mail
+        mailService.sendVerificationMail(token.getUser(), token.getToken());
     }
 
+    // TODO: Move functions bellow to a validation helper class
     private void validateUserRegistry(RegistrationRequestDTO registration) {
 
         //Checking for blanks or null

@@ -1,5 +1,6 @@
 package com.milo.barai.user.auth.controller;
 
+import com.milo.barai.user.auth.dto.ResendVerificationRequestDTO;
 import com.milo.barai.user.auth.dto.UserTokenDTO;
 import com.milo.barai.user.auth.dto.LoginRequestDTO;
 import com.milo.barai.user.auth.dto.RegistrationRequestDTO;
@@ -36,6 +37,11 @@ public class UserAuthController {
         service.verifyUser(token);
     }
 
+    @PutMapping("verification/")
+    public void resendVerification(@RequestBody ResendVerificationRequestDTO resendVerificationRequestDTO) {
+        service.resendVerification(resendVerificationRequestDTO);
+    }
+
     @PostMapping("login")
     public UserTokenDTO login(@Valid @RequestBody LoginRequestDTO loginRequest) {
         return service.login(loginRequest);
@@ -43,7 +49,7 @@ public class UserAuthController {
 
     @PostMapping("tokens/refresh")
     public UserTokenDTO refreshToken(@RequestBody UserTokenDTO userTokenDTO) {
-        return service.refreshToken(userTokenDTO);
+        return service.refreshUserJWT(userTokenDTO);
     }
 
 }
