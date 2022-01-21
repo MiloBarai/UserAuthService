@@ -12,7 +12,7 @@ import javax.validation.Valid;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/auth/users/")
+@RequestMapping("/api/auth/user/")
 public class UserAuthController {
 
     private final AuthService service;
@@ -22,9 +22,8 @@ public class UserAuthController {
         this.service = service;
     }
 
-
-    @PostMapping("signup")
-    public void signup(@RequestBody RegistrationRequestDTO registrationRequestDTO){
+    @PostMapping
+    public void signup(@RequestBody RegistrationRequestDTO registrationRequestDTO) {
         log.debug("signup, called.");
         service.signup(registrationRequestDTO);
     }
@@ -32,7 +31,7 @@ public class UserAuthController {
     //Should preferably be a put mapping as it makes changes in the DB
     //Currently set to get to be able to verify with just a basic browser.
     @GetMapping("verification/{token}")
-    public void verifyUser(@PathVariable("token") String token){
+    public void verifyUser(@PathVariable("token") String token) {
         service.verifyUser(token);
     }
 
@@ -41,7 +40,7 @@ public class UserAuthController {
         return service.login(loginRequest);
     }
 
-    @PostMapping("tokens/refresh")
+    @PostMapping("token/")
     public UserTokenDTO refreshToken(@RequestBody UserTokenDTO userTokenDTO) {
         return service.refreshToken(userTokenDTO);
     }

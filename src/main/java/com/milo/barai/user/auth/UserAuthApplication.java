@@ -8,10 +8,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAutoConfiguration
 @SpringBootApplication
 @EnableAsync
-public class UserAuth {
+public class UserAuthApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(UserAuth.class, args);
+		SpringApplication.run(UserAuthApplication.class, args);
 	}
 
 }
